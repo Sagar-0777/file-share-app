@@ -1,0 +1,39 @@
+.loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.spinner {
+    border: 3px solid var(--glass-border);
+    border-top: 3px solid var(--color-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.spinner-sm .spinner {
+    width: 24px;
+    height: 24px;
+    border-width: 2px;
+}
+
+.spinner-md .spinner {
+    width: 40px;
+    height: 40px;
+}
+
+.spinner-lg .spinner {
+    width: 60px;
+    height: 60px;
+    border-width: 4px;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}

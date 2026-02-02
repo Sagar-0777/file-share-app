@@ -24,17 +24,23 @@ const Login = () => {
     const handleSendOTP = async (e) => {
         e.preventDefault();
 
-        if (!validatePhoneNumber(phoneNumber)) {
-            toast.error('Please enter a valid phone number');
+        const fullPhone = `+91${phoneNumber}`;
+        if (!validatePhoneNumber(fullPhone)) {
+            toast.error('Please enter a valid 10-digit phone number');
             return;
         }
 
         setLoading(true);
         try {
-            const response = await sendOTP(phoneNumber);
+            const response = await sendOTP(fullPhone);
             if (response.success) {
                 toast.success('OTP sent successfully!');
-                navigate('/verify-otp', { state: { phoneNumber } });
+                navigate('/verify-otp', {
+                    state: {
+                        phoneNumber: fullPhone,
+                        isNewUser: response.data?.isNewUser || false
+                    }
+                });
             }
         } catch (error) {
             toast.error(error || 'Failed to send OTP');
@@ -67,14 +73,17 @@ const Login = () => {
                             <label htmlFor="phone">Phone Number</label>
                             <div className="input-with-icon">
                                 <FaPhone className="input-icon" />
-                                <input
-                                    type="tel"
-                                    id="phone"
-                                    placeholder="+1234567890"
-                                    value={phoneNumber}
-                                    onChange={(e) => setPhoneNumber(e.target.value)}
-                                    required
-                                />
+                                <div className="phone-input-container">
+                                    <span className="country-code">+91</span>
+                                    <input
+                                        type="tel"
+                                        id="phone"
+                                        placeholder="00000 00000"
+                                        value={phoneNumber}
+                                        onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                                        required
+                                    />
+                                </div>
                             </div>
                             <small className="form-hint">
                                 Enter your phone number to receive an OTP

@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:latest
+    container_name: shareapp-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  backend:
+    build: ./backend
+    container_name: shareapp-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/shareApp
+    depends_on:
+      - mongo
+
+  frontend:
+    build: ./frontend/fileShare
+    container_name: shareapp-frontend
+    ports:
+      - "5173:5173"
+    env_file:
+      - ./frontend/fileShare/.env
+    depends_on:
+      - backend
+
+volumes:
+  mongo-data:

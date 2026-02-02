@@ -27,13 +27,13 @@ const fileShareSchema = new mongoose.Schema(
             required: true,
         },
 
-        // S3 storage information
-        s3Key: {
+        // Storage information
+        publicId: {
             type: String,
             required: true,
         },
 
-        s3Url: {
+        url: {
             type: String,
             required: true,
         },
@@ -83,7 +83,6 @@ const fileShareSchema = new mongoose.Schema(
 );
 
 // Index for faster lookups
-fileShareSchema.index({ shareId: 1 });
 fileShareSchema.index({ uploadedBy: 1, createdAt: -1 });
 
 const FileShare = mongoose.model("FileShare", fileShareSchema);

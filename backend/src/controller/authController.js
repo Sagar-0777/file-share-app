@@ -2,12 +2,14 @@ import User from "../models/user.js";
 import OTP from "../models/otp.js";
 import { generateOTP, sendOTP } from "../utils/sms.js";
 import { generateToken } from "../middleware/jwtAuth.js";
+import { normalizePhoneNumber } from "../utils/validation.js";
 
 /**
  * Send OTP to phone number
  * POST /api/auth/send-otp
  */
 export const sendOTPController = async (req, res) => {
+    console.log("DEBUG: sendOTPController hit with body:", req.body);
     try {
         const { phoneNumber } = req.body;
 
@@ -18,29 +20,36 @@ export const sendOTPController = async (req, res) => {
             });
         }
 
-        // Validate phone number format (basic check)
-        if (!phoneNumber.startsWith("+")) {
+        // Normalize and validate phone number format
+        const normalizedPhone = normalizePhoneNumber(phoneNumber);
+        if (!normalizedPhone) {
             return res.status(400).json({
                 success: false,
-                message: "Phone number must be in E.164 format (e.g., +1234567890)",
+                message: "Please provide a valid phone number (e.g., +1234567890)",
             });
         }
 
         // Generate OTP
         const otp = generateOTP();
 
-        // Save OTP to database
+        // Create OTP record
         await OTP.create({
-            phoneNumber,
+            phoneNumber: normalizedPhone,
             otp,
         });
 
+        // Check if user exists
+        const userExists = await User.exists({ phoneNumber: normalizedPhone });
+
         // Send OTP via SMS
-        await sendOTP(phoneNumber, otp);
+        await sendOTP(normalizedPhone, otp);
 
         return res.status(200).json({
             success: true,
             message: "OTP sent successfully",
+            data: {
+                isNewUser: !userExists
+            }
         });
     } catch (error) {
         console.error("Send OTP error:", error);
@@ -67,8 +76,16 @@ export const verifyOTPController = async (req, res) => {
         }
 
         // Find the most recent OTP for this phone number
+        const normalizedPhone = normalizePhoneNumber(phoneNumber);
+        if (!normalizedPhone) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid phone number",
+            });
+        }
+
         const otpRecord = await OTP.findOne({
-            phoneNumber,
+            phoneNumber: normalizedPhone,
             isVerified: false,
         }).sort({ createdAt: -1 });
 
@@ -111,19 +128,19 @@ export const verifyOTPController = async (req, res) => {
         await otpRecord.save();
 
         // Find or create user
-        let user = await User.findOne({ phoneNumber });
+        let user = await User.findOne({ phoneNumber: normalizedPhone });
 
         if (!user) {
             // Create new user
-            if (!name) {
+            if (!name || name.trim() === "") {
                 return res.status(400).json({
                     success: false,
-                    message: "Name is required for new users",
+                    message: "Welcome! Please enter your full name to complete registration.",
                 });
             }
 
             user = await User.create({
-                phoneNumber,
+                phoneNumber: normalizedPhone,
                 name,
                 authMethod: "phone",
                 isPhoneVerified: true,
@@ -140,13 +157,15 @@ export const verifyOTPController = async (req, res) => {
         return res.status(200).json({
             success: true,
             message: "Login successful",
-            token,
-            user: {
-                id: user._id,
-                name: user.name,
-                phoneNumber: user.phoneNumber,
-                email: user.email,
-                profilePicture: user.profilePicture,
+            data: {
+                token,
+                user: {
+                    id: user._id,
+                    name: user.name,
+                    phoneNumber: user.phoneNumber,
+                    email: user.email,
+                    profilePicture: user.profilePicture,
+                },
             },
         });
     } catch (error) {
@@ -175,7 +194,7 @@ export const getProfile = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            user: {
+            data: {
                 id: user._id,
                 name: user.name,
                 email: user.email,
@@ -222,7 +241,7 @@ export const updateProfile = async (req, res) => {
         return res.status(200).json({
             success: true,
             message: "Profile updated successfully",
-            user: {
+            data: {
                 id: user._id,
                 name: user.name,
                 email: user.email,

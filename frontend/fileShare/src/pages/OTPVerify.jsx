@@ -11,6 +11,7 @@ import './OTPVerify.css';
 
 const OTPVerify = () => {
     const [otp, setOtp] = useState('');
+    const [name, setName] = useState('');
     const [loading, setLoading] = useState(false);
     const [resendLoading, setResendLoading] = useState(false);
     const [timer, setTimer] = useState(60);
@@ -18,6 +19,7 @@ const OTPVerify = () => {
     const location = useLocation();
     const { login } = useAuth();
     const phoneNumber = location.state?.phoneNumber;
+    const isNewUser = location.state?.isNewUser;
 
     // Redirect if no phone number
     useEffect(() => {
@@ -44,9 +46,14 @@ const OTPVerify = () => {
             return;
         }
 
+        if (isNewUser && (!name || name.trim() === '')) {
+            toast.error('Please enter your full name');
+            return;
+        }
+
         setLoading(true);
         try {
-            const response = await verifyOTP(phoneNumber, otp);
+            const response = await verifyOTP(phoneNumber, otp, name);
             if (response.success) {
                 login(response.data.user, response.data.token);
                 toast.success('Login successful!');
@@ -98,8 +105,27 @@ const OTPVerify = () => {
 
                     {/* OTP Form */}
                     <form onSubmit={handleVerifyOTP} className="otp-form">
+                        {isNewUser && (
+                            <div className="form-group">
+                                <label htmlFor="name">Full Name</label>
+                                <input
+                                    type="text"
+                                    id="name"
+                                    className="name-input"
+                                    placeholder="Enter your name"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    required
+                                    autoFocus={isNewUser}
+                                />
+                                <small className="form-hint">Required for registration</small>
+                            </div>
+                        )}
+
                         <div className="form-group">
+                            <label htmlFor="otp">Verification Code</label>
                             <input
+                                id="otp"
                                 type="text"
                                 className="otp-input"
                                 placeholder="000000"
@@ -107,7 +133,7 @@ const OTPVerify = () => {
                                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                                 maxLength={6}
                                 required
-                                autoFocus
+                                autoFocus={!isNewUser}
                             />
                         </div>
 

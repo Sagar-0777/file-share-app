@@ -35,13 +35,13 @@ export const getFileByShareId = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            file: {
+            data: {
                 fileName: file.fileName,
                 fileSize: file.fileSize,
                 fileType: file.fileType,
-                downloadUrl: file.s3Url,
+                url: file.url,
                 uploaderName: file.uploaderName,
-                uploadedAt: file.createdAt,
+                createdAt: file.createdAt,
                 downloadCount: file.downloadCount,
             },
         });

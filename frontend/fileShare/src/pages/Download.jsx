@@ -34,8 +34,8 @@ const Download = () => {
     }, [shareId]);
 
     const handleDownload = () => {
-        if (fileData?.s3Url) {
-            window.open(fileData.s3Url, '_blank');
+        if (fileData?.url) {
+            window.open(fileData.url, '_blank');
             toast.success('Download started!');
         }
     };

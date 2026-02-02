@@ -16,8 +16,8 @@ export const sendOTP = async (phoneNumber) => {
  * @param {string} otp - OTP code
  * @returns {Promise} API response with token and user data
  */
-export const verifyOTP = async (phoneNumber, otp) => {
-    const response = await api.post('/auth/verify-otp', { phoneNumber, otp });
+export const verifyOTP = async (phoneNumber, otp, name) => {
+    const response = await api.post('/auth/verify-otp', { phoneNumber, otp, name });
     return response.data;
 };
 

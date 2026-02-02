@@ -1,6 +1,7 @@
 import FileShare from "../models/fileShare.js";
-import { uploadToS3, deleteFromS3 } from "../utils/s3.js";
+import { uploadToCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 import { sendDownloadLink } from "../utils/sms.js";
+import { normalizePhoneNumber } from "../utils/validation.js";
 
 /**
  * Upload file and create shareable link
@@ -25,19 +26,19 @@ export const uploadFile = async (req, res) => {
             });
         }
 
-        // Validate phone number format
-        if (!receiverPhone.startsWith("+")) {
+        // Normalize and validate phone number format
+        const normalizedReceiverPhone = normalizePhoneNumber(receiverPhone);
+        if (!normalizedReceiverPhone) {
             return res.status(400).json({
                 success: false,
-                message: "Phone number must be in E.164 format (e.g., +1234567890)",
+                message: "Please provide a valid receiver phone number (e.g., +1234567890)",
             });
         }
 
-        // Upload to S3
-        const { s3Key, s3Url } = await uploadToS3(
+        // Upload to Cloudinary
+        const { publicId, url } = await uploadToCloudinary(
             req.file.buffer,
-            req.file.originalname,
-            req.file.mimetype
+            req.file.originalname
         );
 
         // Create file share record
@@ -45,11 +46,11 @@ export const uploadFile = async (req, res) => {
             fileName: req.file.originalname,
             fileSize: req.file.size,
             fileType: req.file.mimetype,
-            s3Key,
-            s3Url,
+            publicId,
+            url,
             uploadedBy: req.user.id,
             uploaderName: req.user.name,
-            receiverPhone,
+            receiverPhone: normalizedReceiverPhone,
         });
 
         // Generate shareable link
@@ -58,7 +59,7 @@ export const uploadFile = async (req, res) => {
         // Send SMS notification to receiver
         try {
             await sendDownloadLink(
-                receiverPhone,
+                normalizedReceiverPhone,
                 req.user.name,
                 req.file.originalname,
                 downloadLink
@@ -71,7 +72,7 @@ export const uploadFile = async (req, res) => {
         return res.status(201).json({
             success: true,
             message: "File uploaded successfully",
-            file: {
+            data: {
                 id: fileShare._id,
                 fileName: fileShare.fileName,
                 fileSize: fileShare.fileSize,
@@ -116,7 +117,7 @@ export const getUserFiles = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            files: filesWithLinks,
+            data: filesWithLinks,
         });
     } catch (error) {
         console.error("Get user files error:", error);
@@ -147,8 +148,8 @@ export const deleteFile = async (req, res) => {
             });
         }
 
-        // Delete from S3
-        await deleteFromS3(file.s3Key);
+        // Delete from Cloudinary
+        await deleteFromCloudinary(file.publicId);
 
         // Mark as inactive (soft delete)
         file.isActive = false;

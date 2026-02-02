@@ -51,11 +51,10 @@ const userSchema = new mongoose.Schema(
 );
 
 // Ensure at least one authentication method is present
-userSchema.pre("save", function (next) {
+userSchema.pre("save", async function () {
     if (!this.auth0Id && !this.phoneNumber) {
-        next(new Error("User must have either auth0Id or phoneNumber"));
+        throw new Error("User must have either auth0Id or phoneNumber");
     }
-    next();
 });
 
 const User = mongoose.model("User", userSchema);

@@ -14,6 +14,37 @@
     margin-bottom: var(--spacing-2xl);
 }
 
+/* Receiver Phone Form Group Styles */
+.phone-input-container {
+    display: flex;
+    align-items: center;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-top: var(--spacing-sm);
+}
+
+.country-code {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-text-primary);
+    font-weight: 600;
+    font-size: 1.1rem;
+    border-right: 1px solid var(--glass-border);
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.phone-input-container input {
+    border: none !important;
+    background: transparent !important;
+    padding: var(--spacing-md) !important;
+    flex: 1;
+    width: 100%;
+}
+
 .back-btn {
     display: inline-flex;
     align-items: center;

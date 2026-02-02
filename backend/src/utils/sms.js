@@ -1,4 +1,4 @@
-import { smsClient } from "../configration/twilio.js";
+import { getSmsClient } from "../configration/twilio.js";
 
 /**
  * Generate a random 6-digit OTP
@@ -14,7 +14,8 @@ export const generateOTP = () => {
  */
 export const sendOTP = async (phoneNumber, otp) => {
     try {
-        const message = await smsClient.messages.create({
+        const client = getSmsClient();
+        const message = await client.messages.create({
             body: `Your verification code is: ${otp}. This code will expire in 5 minutes.`,
             from: process.env.TWILIO_PHONE_NUMBER,
             to: phoneNumber,
@@ -23,8 +24,18 @@ export const sendOTP = async (phoneNumber, otp) => {
         console.log(`OTP sent to ${phoneNumber}: ${message.sid}`);
         return { success: true, messageSid: message.sid };
     } catch (error) {
-        console.error("Error sending OTP:", error);
-        throw new Error("Failed to send OTP. Please check the phone number.");
+        console.error("Twilio Error Details:", {
+            code: error.code,
+            status: error.status,
+            message: error.message
+        });
+
+        // Handle Twilio Trial account restriction (Error 21608)
+        if (String(error.code) === '21608') {
+            throw new Error("Twilio Trial Error: The destination phone number is not verified in your Twilio Console. Please verify it at https://console.twilio.com/us1/receiver-numbers/verified-caller-ids");
+        }
+
+        throw new Error(error.message || "Failed to send OTP. Please check the phone number.");
     }
 };
 
@@ -42,7 +53,8 @@ export const sendDownloadLink = async (
     downloadLink
 ) => {
     try {
-        const message = await smsClient.messages.create({
+        const client = getSmsClient();
+        const message = await client.messages.create({
             body: `${senderName} shared a file with you!\n\nFile: ${fileName}\n\nDownload: ${downloadLink}`,
             from: process.env.TWILIO_PHONE_NUMBER,
             to: phoneNumber,

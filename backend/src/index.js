@@ -1,23 +1,29 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import mongoose from "mongoose";
 
 // Import routes
 import authRoutes from "./routes/auth.js";
 import uploadRoutes from "./routes/uploads.js";
 import downloadRoutes from "./routes/download.js";
-import otpRoutes from "./routes/otpRoute.js";
 
 // Import middleware
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
-
-dotenv.config();
 const app = express();
 
 // CORS Configuration
+const allowedOrigins = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(",") : ["http://localhost:5173"];
 const corsOptions = {
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.includes("*")) {
+            callback(null, true);
+        } else {
+            callback(new Error("Not allowed by CORS"));
+        }
+    },
     credentials: true,
     optionsSuccessStatus: 200,
 };
@@ -56,8 +62,6 @@ app.get("/health", (req, res) => {
     });
 });
 
-// ⭐ Firebase OTP API Route
-app.use("/api/otp", otpRoutes);
 
 // Other API Routes
 app.use("/api/auth", authRoutes);

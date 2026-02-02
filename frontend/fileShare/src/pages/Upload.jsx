@@ -40,14 +40,15 @@ const Upload = () => {
             return;
         }
 
-        if (!validatePhoneNumber(receiverPhone)) {
-            toast.error('Please enter a valid phone number');
+        const fullPhone = `+91${receiverPhone}`;
+        if (!validatePhoneNumber(fullPhone)) {
+            toast.error('Please enter a valid 10-digit phone number');
             return;
         }
 
         setUploading(true);
         try {
-            const response = await uploadFile(file, receiverPhone, (progress) => {
+            const response = await uploadFile(file, fullPhone, (progress) => {
                 setUploadProgress(progress);
             });
 
@@ -181,14 +182,17 @@ const Upload = () => {
                                 <label htmlFor="receiver">Receiver's Phone Number</label>
                                 <div className="input-with-icon">
                                     <FaPhone className="input-icon" />
-                                    <input
-                                        type="tel"
-                                        id="receiver"
-                                        placeholder="+1234567890"
-                                        value={receiverPhone}
-                                        onChange={(e) => setReceiverPhone(e.target.value)}
-                                        required
-                                    />
+                                    <div className="phone-input-container">
+                                        <span className="country-code">+91</span>
+                                        <input
+                                            type="tel"
+                                            id="receiver"
+                                            placeholder="00000 00000"
+                                            value={receiverPhone}
+                                            onChange={(e) => setReceiverPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                                            required
+                                        />
+                                    </div>
                                 </div>
                                 <small className="form-hint">
                                     Receiver will get an SMS with the download link

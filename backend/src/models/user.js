@@ -2,58 +2,70 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
     {
-        // Auth0 user ID (for users who login via Auth0)
+        // --- Authentication Fields ---
         auth0Id: {
             type: String,
             sparse: true,
             unique: true,
+            trim: true,
         },
-
-        // Phone number (for users who login via OTP)
         phoneNumber: {
             type: String,
             sparse: true,
             unique: true,
+            trim: true,
+            match: [/^\+?[1-9]\d{1,14}$/, "Please fill a valid phone number"],
+        },
+        authMethod: {
+            type: String,
+            enum: ["auth0", "phone"],
+            required: [true, "Authentication method is required"],
         },
 
-        // Common user information
+        // --- Personal Information ---
+        name: {
+            type: String,
+            required: [true, "Name is required"],
+            trim: true,
+            minlength: [2, "Name must be at least 2 characters"],
+        },
         email: {
             type: String,
             sparse: true,
+            trim: true,
+            lowercase: true,
+            match: [
+                /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
+                "Please fill a valid email address",
+            ],
         },
-
-        name: {
-            type: String,
-            required: true,
-        },
-
         profilePicture: {
             type: String,
             default: "",
+            trim: true,
         },
 
-        // Phone verification status
+        // --- Status Fields ---
         isPhoneVerified: {
             type: Boolean,
             default: false,
         },
-
-        // Track authentication method
-        authMethod: {
-            type: String,
-            enum: ["auth0", "phone"],
-            required: true,
-        },
     },
     {
-        timestamps: true, // Adds createdAt and updatedAt
+        timestamps: true,
     }
 );
 
-// Ensure at least one authentication method is present
+// Middleware: Ensure valid auth method and identifiers
 userSchema.pre("save", async function () {
+    // Check if at least one auth identifier is present
     if (!this.auth0Id && !this.phoneNumber) {
         throw new Error("User must have either auth0Id or phoneNumber");
+    }
+
+    // Optional: Log successful save for debugging in dev
+    if (process.env.NODE_ENV === "development") {
+        console.log(`💾 Saving user: ${this.name} (${this.phoneNumber || this.auth0Id})`);
     }
 });
 

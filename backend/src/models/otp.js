@@ -2,21 +2,26 @@ import mongoose from "mongoose";
 
 const otpSchema = new mongoose.Schema(
     {
+        // --- Core OTP Fields ---
         phoneNumber: {
             type: String,
-            required: true,
+            required: [true, "Phone number is required"],
             index: true,
+            trim: true,
+            match: [/^\+?[1-9]\d{1,14}$/, "Please fill a valid phone number"],
         },
 
         otp: {
             type: String,
-            required: true,
+            required: [true, "OTP code is required"],
+            trim: true,
         },
 
+        // --- Expiration & Verification ---
         expiresAt: {
             type: Date,
             required: true,
-            default: () => new Date(Date.now() + 5 * 60 * 1000), // 5 minutes from now
+            default: () => new Date(Date.now() + 5 * 60 * 1000), // Default: 5 minutes from now
         },
 
         isVerified: {
@@ -24,6 +29,7 @@ const otpSchema = new mongoose.Schema(
             default: false,
         },
 
+        // --- Rate Limiting / Security ---
         attempts: {
             type: Number,
             default: 0,

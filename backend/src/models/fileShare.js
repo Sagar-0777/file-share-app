@@ -3,78 +3,82 @@ import crypto from "crypto";
 
 const fileShareSchema = new mongoose.Schema(
     {
-        // Unique shareable link ID
+        // --- Sharing Metadata ---
         shareId: {
             type: String,
             unique: true,
-            required: true,
+            required: [true, "Share ID is required"],
             default: () => crypto.randomBytes(16).toString("hex"),
+            trim: true,
         },
 
-        // File metadata
+        // --- File Metadata ---
         fileName: {
             type: String,
-            required: true,
+            required: [true, "File name is required"],
+            trim: true,
         },
-
         fileSize: {
             type: Number,
-            required: true,
+            required: [true, "File size is required"],
         },
-
         fileType: {
             type: String,
-            required: true,
+            required: [true, "File type is required"],
+            trim: true,
         },
 
-        // Storage information
+        // --- Cloudinary Storage Information ---
         publicId: {
             type: String,
-            required: true,
+            required: [true, "Cloudinary public ID is required"],
+            trim: true,
         },
-
         url: {
             type: String,
-            required: true,
+            required: [true, "Cloudinary URL is required"],
+            trim: true,
         },
 
-        // Uploader information
+        // --- Uploader Information ---
         uploadedBy: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
-            required: true,
+            required: [true, "Uploader user ID is required"],
+            index: true,
         },
-
         uploaderName: {
             type: String,
-            required: true,
+            required: [true, "Uploader name is required"],
+            trim: true,
         },
 
-        // Receiver information
+        // --- Receiver & Tracking ---
         receiverPhone: {
             type: String,
-            required: true,
+            required: [true, "Receiver phone number is required"],
+            trim: true,
+            match: [/^\+?[1-9]\d{1,14}$/, "Please fill a valid phone number"],
+            index: true,
         },
-
-        // Download tracking
         downloadCount: {
             type: Number,
             default: 0,
+            min: 0,
         },
-
         lastDownloadedAt: {
             type: Date,
         },
 
-        // Optional expiration
+        // --- Expiration & Status ---
         expiresAt: {
             type: Date,
+            index: true,
         },
-
-        // Status
         isActive: {
             type: Boolean,
             default: true,
+            index: true,
         },
     },
     {

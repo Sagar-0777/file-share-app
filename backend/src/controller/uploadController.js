@@ -54,7 +54,8 @@ export const uploadFile = async (req, res) => {
         });
 
         // Generate shareable link
-        const downloadLink = `${process.env.FRONTEND_URL}/download/${fileShare.shareId}`;
+        const baseUrl = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(",")[0].trim() : "http://localhost:5173";
+        const downloadLink = `${baseUrl}/download/${fileShare.shareId}`;
 
         // Send SMS notification to receiver
         try {
